@@ -2,6 +2,8 @@
 - name: HTTPS APT transport for Docker repository
   apt:
     name: apt-transport-https
+    update_cache: yes
+    cache_valid_time: 86400
     state: present
 
 - name: Add Docker repository key
@@ -13,7 +15,7 @@
 
 - name: Add Docker repository and update apt cache
   apt_repository:
-    repo: "deb https://apt.dockerproject.org/repo debian-stretch main"
+    repo: "deb https://apt.dockerproject.org/repo debian-{{ansible_lsb.codename}} main"
     mode: '644'
     update_cache: yes
     state: present
