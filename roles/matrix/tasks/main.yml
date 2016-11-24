@@ -1,0 +1,14 @@
+---
+# call only this rule with ansible-playbook multi-matrix.yml --tags=matrix -v
+- name: create homeserver
+  file: path=/srv/www/{{matrix_domain}}/data state=directory mode=0700
+  
+- name: set homeserver_exists
+  stat: path=/srv/www/{{matrix_domain}}/data/homeserver.yaml
+  register: homeserver_exists
+  
+- name: generate silviof/docker-matrix docker container for matrix, the first time, this may take a while ...
+  command: docker run -v /srv/www/{{matrix_domain}}/data:/data --rm -e SERVER_NAME={{matrix_domain}} -e REPORT_STATS=no silviof/docker-matrix generate
+  when: homeserver_exists.stat.exists == false
+
+# docker run --name matrix -d --restart=always -p 127.0.0.1:8008:8008 -p 8448:8448 -p 3478:3478 -v /srv/www/matrix.tan3.de/data:/data silviof/docker-matrix start
