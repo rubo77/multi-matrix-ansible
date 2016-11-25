@@ -1,14 +1,38 @@
 ---
 # call only this rule with ansible-playbook multi-matrix.yml --tags=matrix -v
+
+# debug
+# - name: Display all variables/facts known for a host
+#   debug: var=hostvars[inventory_hostname] verbosity=1
+
 - name: create homeserver
-  file: path=/srv/www/{{matrix_domain}}/data state=directory mode=0700
-  
+  file: path=/srv/www/{{item.url}}/data state=directory mode=0700
+  with_items: "{{matrix_servers}}"
+
 - name: set homeserver_exists
-  stat: path=/srv/www/{{matrix_domain}}/data/homeserver.yaml
+  stat: path=/srv/www/{{item.url}}/data/homeserver.yaml
   register: homeserver_exists
-  
+  with_items: "{{matrix_servers}}"
+
 - name: generate silviof/docker-matrix docker container for matrix, the first time, this may take a while ...
-  command: docker run -v /srv/www/{{matrix_domain}}/data:/data --rm -e SERVER_NAME={{matrix_domain}} -e REPORT_STATS=no silviof/docker-matrix generate
-  when: homeserver_exists.stat.exists == false
+  command: docker run -v /srv/www/{{item.item.url}}/data:/data --rm -e SERVER_NAME={{item.item.url}} -e REPORT_STATS=no silviof/docker-matrix generate
+  when: "{{item.stat.exists == false}}"
+  with_items: "{{homeserver_exists.results}}"
+
+- debug: msg="starting container with ports {{ item.port|int }} {{ (item.port + 1)|int}}"
+  with_items: "{{matrix_servers}}"
+
+- name: start docker container for matrix servers
+  docker_container:
+    name: "matrix-{{item.url}}"
+    image: silviof/docker-matrix
+    restart_policy: "always"
+    state: started
+    ports:
+      - "127.0.0.1:{{item.port}}:8008"
+      - "127.0.0.1:{{(item.port)+1}}:3478"
+    volumes:
+      - "/srv/www/{{item.url}}/data:/data"
+  with_items: "{{matrix_servers}}"
 
 # docker run --name matrix -d --restart=always -p 127.0.0.1:8008:8008 -p 8448:8448 -p 3478:3478 -v /srv/www/matrix.tan3.de/data:/data silviof/docker-matrix start

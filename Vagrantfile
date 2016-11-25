@@ -15,16 +15,24 @@ Vagrant.configure("2") do |config|
       vb.memory = "512"
     end
 
+    matrix_servers = [{
+      url: "dummy.site",
+      port: 10000
+    }]
+
     web_config.vm.provision "ansible" do |ansible|
       ansible.playbook = "multi-matrix.yml"
       ansible.groups = {
         "multi-matrix" => ['matrixdev']
       }
       ansible.host_vars = {
-        "matrixdev" => {"ansible_become" => true, 'matrix_domain' => 'dummy.site'}
+        "matrixdev" => {
+          "ansible_become" => true,
+          'matrix_servers' => "'#{matrix_servers.to_json}'"
+        }
       }
       ansible.verbose = 'v'
-      ansible.tags = ['matrix']
+      ansible.tags = ['nginx', 'matrix']
     end
   end
 

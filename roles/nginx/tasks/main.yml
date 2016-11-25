@@ -4,3 +4,12 @@
   apt:
     name: nginx
     state: present
+
+- name: create vhost htdoc directory for matrix servers
+  file: path="/srv/www/{{item.url}}/htdocs" state=directory
+  with_items: "{{matrix_servers}}"
+
+- name: upload nginx vhost templates for matrix servers
+  template: src=nginx.conf.j2 dest="/etc/nginx/sites-enabled/{{item.url}}"
+  with_items: "{{matrix_servers}}"
+  notify: restart nginx
