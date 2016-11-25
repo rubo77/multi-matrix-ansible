@@ -2,9 +2,9 @@ server {
   listen 80;
   server_name  {{item.url}};
 
-  // for letsencrypt
-  // redirect everthing to https except for .well-known
-  
+  # for letsencrypt
+  # redirect everthing to https except for .well-known
+
   location ~ ^/(?!(\.well-known)) {
     return 301 https://$host$request_uri;
   }
@@ -26,7 +26,7 @@ server {
 
 server {
   listen 8448 ssl;
-  server_name  {{item.url}}
+  server_name  {{item.url}};
 
   ssl_certificate     /srv/www/{{item.url}}/data/{{item.url}}.tls.crt;
   ssl_certificate_key /srv/www/{{item.url}}/data/{{item.url}}.tls.key;
